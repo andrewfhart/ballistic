@@ -20,12 +20,12 @@ exports.create = function(req, res) {
   } else if (!validator.isAlphanumeric(req.body.username)) {
     res.send({success: false, error: 'username must contain only letters and numbers'});
   } else {
-    models.User.find({ where: {username: {ilike: req.body.username}} }).then(function(user) {
+    models.User.find({ where: {username: req.body.username.toLowerCase()}}).then(function(user) {
       if (user) {
         res.send({success: false, error: 'username already taken'});
       } else {
         models.User.hash(req.body.password, function(err, hash){
-          models.User.create({ username: req.body.username, password: hash }).then(function(user) {
+          models.User.create({ username: req.body.username.toLowerCase(), password: hash }).then(function(user) {
             models.UserMeta.create({}).then(function(usermeta){
               usermeta.setUser(user);
               req.session.userID = user.id;
@@ -42,7 +42,7 @@ exports.authenticate = function(req, res) {
   if (!req.body.username || !req.body.password) {
     res.send({success: false, error: 'fields left empty'});
   } else {
-    models.User.find({ where: {username: {ilike: req.body.username}} }).then(function(user) {
+    models.User.find({ where: {username: req.body.username.toLowerCase()}}).then(function(user) {
       if (!user) {
         res.send({success: false, error: 'user not found'});
       } else {
@@ -53,7 +53,7 @@ exports.authenticate = function(req, res) {
             user.getUserMetum().then(function(usermeta){
               req.session.userID = user.id;
               res.send({success: true, user: buildReplyUser(user, usermeta)});
-            }); 
+            });
           }
         });
       }
@@ -67,7 +67,7 @@ exports.session = function(req, res) {
       user.getUserMetum().then(function(usermeta){
         res.send({success: true, user: buildReplyUser(user, usermeta)});
       });
-    }); 
+    });
   } else {
     debug('session expired');
     res.send({success: false, error: 'session expired'});
